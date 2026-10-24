@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="api-base" content="">
+<title>AI – Environmental Intelligence</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="15" fill="var(--soft)"/><path d="M8 20c0-7 5-11 15-12-1 9-5 14-12 14-1 0-2-.3-3-.8z" fill="var(--moss)"/><path d="M9 23c4-5 7-8 11-11" stroke="var(--bg)" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>
+      AI – Environmental Intelligence
+    </div>
+    <div class="hbtns">
+      <button class="pill" id="lang" aria-label="Answer language: automatic" title="Answers follow your question language">AUTO</button>
+      <button class="pill" id="theme" aria-label="Toggle dark mode">Dark</button>
+    </div>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="t-ask" aria-controls="thread" aria-selected="true">Ask</button>
+    <button class="tab" role="tab" id="t-ins" aria-controls="insights" aria-selected="false">Daily insights</button>
+    <button class="tab" role="tab" id="t-powerbi" aria-controls="powerbi" aria-selected="false">Environmental Analytics</button>
+  </div>
+
+  <section class="strip" aria-label="Local environmental conditions">
+    <div class="read"><b id="aqiValue">--</b><span><i style="background:var(--sun)"></i><span id="aqiLabel">Waiting for live AQI data</span></span></div>
+    <div class="read"><b id="uvValue">--</b><span><i style="background:var(--sun)"></i><span id="uvLabel">Waiting for live UV data</span></span></div>
+    <div class="read"><b id="temperatureValue">--</b><span><i style="background:var(--water)"></i>Temperature, feels <span id="feelsLikeValue">--</span></span></div>
+    <div class="read"><b id="co2Value">--</b><span><i style="background:var(--moss)"></i><span id="co2Label">Waiting for CO₂ data...</span></span></div>
+    <div class="read">
+    <b id="riskScoreValue">--</b>
+    <span>
+    <i style="background:var(--green)"></i>
+    Environmental Risk - <span id="riskLevelValue">--</span>
+</span>
+</div>
+
+<div class="read">
+    <b id="predictedAqiValue">--</b>
+    <span>
+        <i style="background:var(--water)"></i>
+        AI AQI Estimate
+    </span>
+    <small id="predictionStatus" class="prediction-status" aria-live="polite">Waiting for environmental data</small>
+</div>
+
+  </section>
+
+<!-- AI INSIGHTS -->
+<section class="ai-insights">
+    <h2>🌿 AI Environmental Insights</h2>
+    <p id="aiInsightText">
+        Analysing current environmental conditions...
+    </p>
+</section>
+
+<section class="ai-insights smart-pollution-alerts" aria-labelledby="pollution-alert-heading">
+    <h2 id="pollution-alert-heading">Smart Pollution Alerts</h2>
+    <p id="pollutionAlertStatus" class="pollution-alert-status" role="status" aria-live="polite">Waiting for current air-quality data...</p>
+    <p id="pollutionAlertText">Alerts will appear when environmental data is available.</p>
+    <p class="pollution-alert-kero"><strong>Kerosene alert:</strong> If kerosene is being burned indoors, use only appliances approved for indoor use, follow their ventilation and maintenance instructions, and keep a working carbon-monoxide alarm. Outdoor AQI cannot detect carbon monoxide or identify kerosene as a pollution source.</p>
+</section>
+
+<!-- ENVIRONMENTAL ANALYTICS -->
+<section class="analytics">
+    <h2>📊 Environmental Analytics</h2>
+    <p>AQI and temperature monitoring</p>
+
+    <div class="analytics-grid">
+        <div class="card">
+            <h3>AQI</h3>
+            <p class="chart-caption" id="aqiChartCaption">Waiting for environmental data...</p>
+            <div class="chart-frame"><canvas id="aqiChart"></canvas></div>
+        </div>
+
+        <div class="card">
+            <h3>Temperature</h3>
+            <p class="chart-caption" id="temperatureChartCaption">Waiting for environmental data...</p>
+            <div class="chart-frame"><canvas id="temperatureChart"></canvas></div>
+        </div>
+    </div>
+
+</section>
+
+  <main id="thread" aria-live="polite">
+    <div class="empty" id="empty">
+      <h1>Ask the planet anything.</h1>
+      <p>Type or speak a question about air, water, climate, waste or wildlife. Answers come with their sources.</p>
+      <div class="chips" id="chips"></div>
+    </div>
+  </main>
+
+  <section id="insights" hidden aria-label="Daily insights and AQI forecasts">
+    <div class="card">
+      <h2>Today in your area</h2>
+      <p class="muted" id="conditionsSource" style="margin:2px 0 0">Waiting for location permission and live environmental data...</p>
+      <a class="muted" id="conditionsAttribution" href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer" hidden>Data by Open-Meteo</a>
+      <div class="seg" id="aqiDetail">Waiting for live data</div>
+      <div class="ro" id="ro"></div>
+      <div id="chart"></div>
+      <div class="seg" id="rseg"></div>
+      <div class="stats" id="stats"></div>
+    </div>
+    <div class="card">
+      <h2>What this means today</h2>
+      <p id="tip" style="margin:6px 0 0"></p>
+      <button class="cta" id="askabout">Ask AI Environmental Intelligence about this</button>
+    </div>
+    <div class="card">
+      <h2>Current pollutant readings</h2>
+      <p class="muted">Live Open-Meteo model estimates. Missing values are shown as unavailable, not zero.</p>
+      <div id="poll"></div>
+    </div>
+    <div class="card">
+      <h2>7-day AQI forecast</h2>
+      <p class="muted">Daily maximum US AQI estimates for the next 7 days.</p>
+      <p class="muted" id="aqiForecastStatus" aria-live="polite">Select your location to load the forecast.</p>
+      <div class="week" id="week"></div>
+    </div>
+  </section>
+
+  <section id="powerbi" role="tabpanel" aria-labelledby="t-powerbi" hidden aria-label="Environmental Analytics">
+    <div class="card">
+      <h2>Environmental Analytics</h2>
+      <article class="card pollution-source-analysis" aria-labelledby="pollution-source-heading">
+        <h3 id="pollution-source-heading">Pollution source analysis</h3>
+        <p class="chart-caption">Source profile: kerosene combustion</p>
+        <dl class="pollution-source-details">
+          <div>
+            <dt>Source category</dt>
+            <dd>Household fuel</dd>
+          </div>
+          <div>
+            <dt>Potential emissions</dt>
+            <dd>Fine particulate matter, carbon monoxide, and nitrogen oxides. Sulfur emissions depend on the fuel.</dd>
+          </div>
+          <div>
+            <dt>What affects impact</dt>
+            <dd>Appliance condition, ventilation, fuel quality, and how the kerosene is burned.</dd>
+          </div>
+        </dl>
+        <p class="muted pollution-source-note">This is a general source profile, not a local measurement. The AQI data above cannot identify or quantify pollution from kerosene specifically.</p>
+        <div class="pollution-source-questions" aria-label="Ask the chatbot about kerosene pollution">
+          <p class="muted">Ask AI about this source, or use the microphone to ask in your own words:</p>
+          <button type="button" class="pollution-source-question" data-question="What pollutants can kerosene burning release?">What pollutants can kerosene release?</button>
+          <button type="button" class="pollution-source-question" data-question="What affects pollution from kerosene?">What affects pollution from kerosene?</button>
+          <button type="button" class="pollution-source-question" data-question="How can I reduce exposure to kerosene smoke indoors?">How can I reduce exposure to kerosene smoke?</button>
+        </div>
+      </article>
+      <section class="pollution-map-section" aria-labelledby="pollution-map-heading">
+        <h3 id="pollution-map-heading">Live pollution map</h3>
+        <p class="muted">Air-quality model estimates around the selected location. These are not ground-station measurements.</p>
+        <p class="muted" id="pollutionMapStatus" role="status" aria-live="polite">Loading live pollution readings…</p>
+        <div class="pollution-map-actions">
+          <button type="button" class="cta" id="pollutionMapLocate">Use my location</button>
+          <button type="button" class="cta" id="pollutionMapRefresh">Refresh map</button>
+        </div>
+        <div id="pollutionMap" role="application" aria-label="Interactive live air quality map"></div>
+        <div class="pollution-map-legend" aria-label="US AQI map legend">
+          <span><i class="aqi-good"></i>Good 0–50</span>
+          <span><i class="aqi-moderate"></i>Moderate 51–100</span>
+          <span><i class="aqi-sensitive"></i>USG 101–150</span>
+          <span><i class="aqi-unhealthy"></i>Unhealthy 151–200</span>
+          <span><i class="aqi-very-unhealthy"></i>Very unhealthy 201–300</span>
+          <span><i class="aqi-hazardous"></i>Hazardous 301+</span>
+        </div>
+        <p class="muted pollution-map-attribution">Map © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a> · Air quality: <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a></p>
+      </section>
+      <p class="muted">The report loads when you open this tab. Sign in with the Microsoft account that has access to it. If it does not appear, open the report directly in Power BI.</p>
+      <p class="muted" id="powerbiStatus" role="status" aria-live="polite">Power BI report has not been loaded yet.</p>
+      <div class="powerbi-frame">
+        <iframe
+          title="Power BI Air Quality Analysis report"
+          data-src="https://app.powerbi.com/reportEmbed?reportId=d172041e-153e-4b99-bd24-24b5c80c3068&amp;pageName=bb145bba5e1957a582a7"
+          loading="lazy"
+          allowfullscreen="true"
+          referrerpolicy="strict-origin-when-cross-origin"></iframe>
+      </div>
+      <div class="powerbi-actions">
+        <a class="cta powerbi-link" href="https://app.powerbi.com/groups/me/reports/d172041e-153e-4b99-bd24-24b5c80c3068/bb145bba5e1957a582a7?experience=power-bi" target="_blank" rel="noopener noreferrer">Open Power BI report</a>
+        <button type="button" class="cta" id="powerbi-refresh">Reload report</button>
+      </div>
+      <p class="muted powerbi-note">The project’s environmental data API is available at <code>/api/powerbi/environment</code>. Connect your Power BI report to that endpoint for shared data; see <a href="/docs/power-bi" target="_blank" rel="noopener noreferrer">Power BI setup instructions</a>.</p>
+    </div>
+  </section>
+
+  <button type="button" id="locationBtn" class="pill">
+  📍 Use My Location
+</button>
+
+<div id="locationStatus" aria-live="polite"></div>
+  <form class="composer" id="form">
+    <input id="q" type="text" placeholder="Ask about the environment" autocomplete="off" aria-label="Your question">
+    <button class="icon" type="submit" aria-label="Send question"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+    <button class="icon mic" type="button" id="mic" aria-label="Start voice assistant"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+  </form>
+</div>
+
+<div class="voice" id="voice" data-state="listening" role="dialog" aria-label="Voice assistant">
+  <div class="orb"><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="core"></div></div>
+  <div class="vstate" id="vstate">Listening</div>
+  <div class="vtext" id="vtext">Say your question</div>
+  <div class="vrow">
+    <button class="pill" id="vagain">Ask again</button>
+    <button class="pill" id="vclose">Close</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="script.js?v=live-environment-3"></script>
+</body>
+</html>
